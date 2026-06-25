@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asesoría · Klantbeheer</title>
+<style>
+  :root{
+    --bg:#f4f6f8;--surface:#ffffff;--line:#e4e7ec;--line-strong:#cdd2da;
+    --ink:#16202e;--ink-soft:#5b6675;--ink-faint:#8a93a1;
+    --brand:#0f5e57;--brand-soft:#e6f0ee;
+    --urgent:#c43e2f;--urgent-soft:#fbeae7;--soon:#b3801b;--soon-soft:#fbf2dd;
+    --done:#3a7d44;--done-soft:#e9f3ea;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --ui:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --radius:10px;--shadow:0 1px 2px rgba(22,32,46,.06),0 4px 16px rgba(22,32,46,.04);
+  }
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{font-family:var(--ui);background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inherit;font-size:14px}
+  .top{position:sticky;top:0;z-index:30;background:var(--ink);color:#fff;display:flex;align-items:center;gap:18px;padding:0 20px;height:56px}
+  .brand{display:flex;align-items:baseline;gap:9px;font-weight:600;letter-spacing:.2px}
+  .brand .mark{font-family:var(--mono);background:var(--brand);color:#fff;border-radius:6px;padding:3px 7px;font-size:12px;letter-spacing:1px}
+  .brand .sub{color:#9aa6b6;font-weight:400;font-size:12.5px}
+  .nav{display:flex;gap:4px;margin-left:8px}
+  .nav button{background:transparent;border:0;color:#aeb8c6;padding:8px 14px;border-radius:7px;font-size:14px;font-weight:500}
+  .nav button.active{background:rgba(255,255,255,.12);color:#fff}
+  .nav button:hover{color:#fff}
+  .top .spacer{flex:1}
+  #savestatus{color:#9aa6b6;font-size:12px;font-family:var(--mono)}
+  .top .util{display:flex;gap:6px}
+  .top .util button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#dfe5ec;padding:7px 12px;border-radius:7px;font-size:12.5px}
+  .top .util button:hover{background:rgba(255,255,255,.16)}
+  .wrap{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .n{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1}
+  .stat .l{color:var(--ink-soft);font-size:12.5px;margin-top:6px}
+  .stat.urgent .n{color:var(--urgent)}.stat.soon .n{color:var(--soon)}.stat.brand .n{color:var(--brand)}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}
+  .section-head h2{font-size:16px;margin:0;font-weight:600}
+  .filter{display:flex;gap:6px}
+  .filter button{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:12.5px;color:var(--ink-soft)}
+  .filter button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .agenda{display:flex;flex-direction:column;gap:8px}
+  .deadline{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line-strong);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow)}
+  .deadline.is-urgent{border-left-color:var(--urgent)}.deadline.is-soon{border-left-color:var(--soon)}.deadline.is-ok{border-left-color:var(--brand)}.deadline.is-done{opacity:.6}
+  .cal{font-family:var(--mono);text-align:center;min-width:54px;line-height:1}
+  .cal .d{font-size:24px;font-weight:600}.cal .m{font-size:11px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:1px;margin-top:3px}.cal .y{font-size:10.5px;color:var(--ink-faint)}
+  .dl-main{flex:1;min-width:0}
+  .dl-main .row1{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .modelo-tag{font-family:var(--mono);font-weight:600;background:var(--ink);color:#fff;border-radius:5px;padding:2px 7px;font-size:12px}
+  .modelo-tag.anual{background:var(--brand)}
+  .dl-name{font-weight:500}
+  .period{font-family:var(--mono);font-size:12px;color:var(--ink-soft);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  .dl-main .row2{color:var(--ink-soft);font-size:13px;margin-top:3px}
+  .dl-main .client-link{color:var(--ink);font-weight:500;cursor:pointer;border-bottom:1px dotted var(--line-strong)}
+  .dl-main .client-link:hover{color:var(--brand)}
+  .days{font-family:var(--mono);text-align:right;min-width:96px;font-size:13px}
+  .days .big{font-size:16px;font-weight:600;display:block}
+  .days.is-urgent{color:var(--urgent)}.days.is-soon{color:var(--soon)}.days.is-ok{color:var(--ink-soft)}
+  .check{border:1.5px solid var(--line-strong);background:var(--surface);border-radius:7px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:transparent;flex-shrink:0;font-size:16px;transition:.12s}
+  .check:hover{border-color:var(--done)}.check.done{background:var(--done);border-color:var(--done);color:#fff}
+  .empty{text-align:center;padding:56px 20px;color:var(--ink-faint);background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius)}
+  .empty strong{display:block;color:var(--ink-soft);margin-bottom:6px;font-size:15px}
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .panel-head{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .panel-head h3{margin:0;font-size:14px;font-weight:600}
+  .search{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:12px 16px;width:calc(100% - 32px)}
+  .search:focus{outline:none;border-color:var(--brand)}
+  .client-list{max-height:62vh;overflow:auto}
+  .client-item{padding:11px 16px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;align-items:center;gap:10px}
+  .client-item:hover{background:var(--bg)}
+  .client-item.active{background:var(--brand-soft);box-shadow:inset 3px 0 0 var(--brand)}
+  .avatar{width:32px;height:32px;border-radius:8px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;font-family:var(--mono)}
+  .avatar.particular{background:#3d5a80}.avatar.autonomo{background:var(--brand)}.avatar.empresa{background:#7d4f9c}
+  .ci-main{flex:1;min-width:0}
+  .ci-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci-meta{font-size:12px;color:var(--ink-faint);font-family:var(--mono)}
+  .ci-badge{font-size:10.5px;font-family:var(--mono);text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+  .ci-badge.due{color:var(--urgent);border-color:var(--urgent-soft);background:var(--urgent-soft)}
+  .btn{border:0;border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:#0c4d47}
+  .btn-ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}.btn-ghost:hover{background:#eceff3}
+  .btn-danger{background:transparent;color:var(--urgent);border:1px solid var(--urgent-soft)}.btn-danger:hover{background:var(--urgent-soft)}
+  .btn-sm{padding:5px 10px;font-size:12.5px}
+  .detail-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:14px}
+  .detail-head .avatar{width:46px;height:46px;font-size:17px;border-radius:10px}
+  .detail-title{flex:1}.detail-title h2{margin:0 0 4px;font-size:19px}
+  .detail-title .nif{font-family:var(--mono);color:var(--ink-soft);font-size:13px}
+  .type-pill{font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;border-radius:5px;padding:3px 8px}
+  .type-pill.particular{background:#e7edf5;color:#3d5a80}.type-pill.autonomo{background:var(--brand-soft);color:var(--brand)}.type-pill.empresa{background:#f0e9f6;color:#7d4f9c}
+  .detail-body{padding:20px}
+  .contact-row{display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin-bottom:18px}
+  .contact-row b{color:var(--ink);font-weight:500}
+  .notes{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13.5px;color:var(--ink-soft);margin-bottom:22px;white-space:pre-wrap}
+  .block-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-faint);margin:0 0 11px;display:flex;align-items:center;justify-content:space-between}
+  .modelo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:24px}
+  .modelo-card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;background:var(--surface)}
+  .modelo-card:hover{border-color:var(--line-strong)}.modelo-card.on{border-color:var(--brand);background:var(--brand-soft)}
+  .modelo-card .box{width:18px;height:18px;border:1.5px solid var(--line-strong);border-radius:5px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;color:transparent;font-size:12px}
+  .modelo-card.on .box{background:var(--brand);border-color:var(--brand);color:#fff}
+  .modelo-card .mc-code{font-family:var(--mono);font-weight:600;font-size:13px}
+  .modelo-card .mc-desc{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .modelo-card .freq{font-size:10.5px;font-family:var(--mono);color:var(--ink-faint);text-transform:uppercase;margin-top:4px}
+  .docs{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+  .doc{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:8px;padding:9px 12px}
+  .doc .dcheck{width:22px;height:22px;border:1.5px solid var(--line-strong);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:transparent;cursor:pointer;font-size:13px}
+  .doc.recv .dcheck{background:var(--done);border-color:var(--done);color:#fff}
+  .doc .dname{flex:1}.doc.recv .dname{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+  .doc .dstatus{font-size:11px;font-family:var(--mono);text-transform:uppercase;color:var(--soon)}.doc.recv .dstatus{color:var(--done)}
+  .doc .x{background:none;border:0;color:var(--ink-faint);font-size:16px;padding:2px 6px}.doc .x:hover{color:var(--urgent)}
+  .doc-add{display:flex;gap:8px;margin-top:4px}
+  .doc-add input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 11px}.doc-add input:focus{outline:none;border-color:var(--brand)}
+  .overlay{position:fixed;inset:0;background:rgba(22,32,46,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:460px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal-head{padding:18px 22px;border-bottom:1px solid var(--line);font-size:16px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .modal-head .x{background:none;border:0;font-size:22px;color:var(--ink-faint);line-height:1}
+  .modal-body{padding:20px 22px}
+  .field{margin-bottom:15px}.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brand)}
+  .field textarea{resize:vertical;min-height:64px}
+  .type-choose{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .type-choose label{display:block;text-align:center;border:1px solid var(--line);border-radius:8px;padding:10px 4px;cursor:pointer;font-size:13px;font-weight:500}
+  .type-choose input{display:none}
+  .type-choose label:has(input:checked){border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+  .modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+  .hint{font-size:12px;color:var(--ink-faint);margin-top:6px}
+  /* boekhouding */
+  .led-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+  .led-card{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .led-card .lc-l{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.5px}
+  .led-card .lc-v{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:3px}
+  .led-card.pos .lc-v{color:var(--done)}.led-card.neg .lc-v{color:var(--urgent)}
+  .recon{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:16px}
+  .recon .rc{display:flex;flex-direction:column;gap:4px}
+  .recon label{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.5px}
+  .recon input{width:140px;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-family:var(--mono)}
+  .recon input:focus{outline:none;border-color:var(--brand)}
+  .recon .arrow{color:var(--ink-faint);font-size:18px;align-self:flex-end;padding-bottom:7px}
+  .recon .diff{margin-left:auto;text-align:right;max-width:230px}
+  .recon .diff .dv{font-family:var(--mono);font-size:18px;font-weight:600}
+  .recon .diff.ok .dv{color:var(--done)}.recon .diff.warn .dv{color:var(--urgent)}
+  .recon .diff .dl{font-size:11px;color:var(--ink-soft);margin-top:2px}
+  .entry-form{display:grid;grid-template-columns:120px 110px 1fr 110px 70px auto;gap:8px;margin-bottom:12px;align-items:end}
+  .entry-form .ef label{font-size:10px;color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:4px;letter-spacing:.3px}
+  .entry-form input,.entry-form select{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 8px}
+  .entry-form input:focus,.entry-form select:focus{outline:none;border-color:var(--brand)}
+  .entry-table{width:100%;border-collapse:collapse;font-size:13px}
+  .entry-table th{text-align:left;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;border-bottom:1px solid var(--line)}
+  .entry-table td{padding:7px 8px;border-bottom:1px solid var(--line)}
+  .entry-table td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
+  .entry-table .tg{font-size:10px;font-family:var(--mono);text-transform:uppercase;border-radius:4px;padding:1px 6px;font-weight:600}
+  .entry-table .tg.income{background:var(--done-soft);color:var(--done)}
+  .entry-table .tg.expense{background:var(--urgent-soft);color:var(--urgent)}
+  .entry-table .del{background:none;border:0;color:var(--ink-faint);cursor:pointer;font-size:15px}
+  .entry-table .del:hover{color:var(--urgent)}
+  .qtbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+  .qtbl th,.qtbl td{padding:6px 9px;border:1px solid var(--line);text-align:right;font-family:var(--mono)}
+  .qtbl th{background:var(--bg);color:var(--ink-soft);font-weight:600;text-transform:uppercase;font-size:10px;text-align:center}
+  .qtbl td:first-child,.qtbl th:first-child{text-align:left}
+  /* bankafschrift import */
+  .bank-block{margin-bottom:18px}
+  .bank-summary{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--brand-soft);border:1px solid #cfe3df;border-radius:8px;padding:11px 14px}
+  .bank-summary .bs-main{flex:1;min-width:140px}
+  .bank-summary .bs-file{font-weight:600;font-size:13.5px}
+  .bank-summary .bs-meta{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .bank-summary .bs-bal{font-family:var(--mono);text-align:right}
+  .bank-summary .bs-bal .bl{font-size:10px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px}
+  .bank-summary .bs-bal b{font-size:15px}
+  .bank-actions{display:flex;gap:6px}
+  .bank-import{border:1px dashed var(--line-strong);border-radius:8px;padding:14px;background:var(--bg);margin-top:8px}
+  .bi-file{display:inline-block;background:var(--brand);color:#fff;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:500;cursor:pointer}
+  .bi-hint{font-size:12px;color:var(--ink-soft);margin-left:10px}
+  .bm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+  .bm-grid .bm-f label{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:4px;letter-spacing:.3px}
+  .bm-grid select,.bm-grid input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 8px}
+  .bm-grid select:focus,.bm-grid input:focus{outline:none;border-color:var(--brand)}
+  .bm-preview{overflow:auto;border:1px solid var(--line);border-radius:7px;margin:10px 0;max-width:100%}
+  .bm-preview table{border-collapse:collapse;font-size:11.5px;font-family:var(--mono);white-space:nowrap}
+  .bm-preview td,.bm-preview th{padding:4px 9px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+  .bm-preview th{background:var(--bg);color:var(--ink-soft);text-align:left}
+  .bank-mov{max-height:280px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+  .bank-mov table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .bank-mov td{padding:6px 9px;border-bottom:1px solid var(--line)}
+  .bank-mov td.num{font-family:var(--mono);text-align:right;white-space:nowrap}
+  .bank-mov td.pos{color:var(--done)}.bank-mov td.neg{color:var(--urgent)}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}.strip{grid-template-columns:repeat(2,1fr)}.nav button{padding:8px 10px;font-size:13px}.brand .sub{display:none}.led-grid{grid-template-columns:repeat(2,1fr)}.entry-form{grid-template-columns:1fr 1fr}.bm-grid{grid-template-columns:1fr}}
+  /* AI extraction confirm */
+  .confirm-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px;margin:10px 0}
+  .cf-item{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+  .cf-label{font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  .cf-value{font-family:var(--mono);font-size:13px;font-weight:500;word-break:break-all}
+  .modelo-sug{background:var(--brand-soft);border:1px solid #cfe3df;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px}
+  .modelo-sug .ms-codes{font-family:var(--mono);font-weight:600;color:var(--brand);margin-bottom:4px}
+  .cf-disclaimer{background:var(--soon-soft);border:1px solid #f0d9a0;border-radius:7px;padding:9px 12px;font-size:12px;color:var(--soon);margin:10px 0}
+  .cf-form{display:grid;grid-template-columns:110px 100px 1fr 80px 56px;gap:7px;margin-top:10px}
+  .cf-form .cff-l{font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+  .cf-form input,.cf-form select{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-family:inherit;font-size:13px}
+  .cf-form input:focus,.cf-form select:focus{outline:none;border-color:var(--brand)}
+  /* Ask your books */
+  .ask-zone{margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
+  .ask-zone textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;resize:vertical;min-height:54px;font-size:13.5px;font-family:inherit}
+  .ask-zone textarea:focus{outline:none;border-color:var(--brand)}
+  .ask-resp{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13.5px;white-space:pre-wrap;margin-top:8px;display:none;line-height:1.5}
+  /* Reminder button on deadline cards */
+  .remind-btn{background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:3px 7px;font-size:13px;cursor:pointer;flex-shrink:0;line-height:1}
+  .remind-btn:hover{background:var(--bg);border-color:var(--line-strong)}
+  @media(max-width:820px){.cf-form{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><span class="mark">AF</span> Asesoría <span class="sub">· klant- &amp; modelobeheer</span></div>
+  <div class="nav">
+    <button id="nav-agenda" class="active" onclick="setView('agenda')">Agenda</button>
+    <button id="nav-clients" onclick="setView('clients')">Klanten</button>
+  </div>
+  <div class="spacer"></div>
+  <span id="savestatus"></span>
+  <div class="util">
+    <button onclick="exportData()">Backup ↓</button>
+    <button onclick="document.getElementById('importfile').click()">Herstellen ↑</button>
+    <input type="file" id="importfile" accept="application/json" style="display:none" onchange="importData(event)">
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="view-agenda">
+    <div class="strip" id="strip"></div>
+    <div class="section-head">
+      <h2>Aankomende deadlines</h2>
+      <div class="filter" id="agenda-filter">
+        <button class="active" data-f="open" onclick="setFilter('open')">Open</button>
+        <button data-f="urgent" onclick="setFilter('urgent')">Urgent</button>
+        <button data-f="done" onclick="setFilter('done')">Ingediend</button>
+        <button data-f="all" onclick="setFilter('all')">Alles</button>
+      </div>
+    </div>
+    <div class="agenda" id="agenda"></div>
+  </div>
+
+  <div id="view-clients" style="display:none">
+    <div class="grid">
+      <div class="panel">
+        <div class="panel-head"><h3>Klanten</h3><button class="btn btn-primary btn-sm" onclick="openClientModal()">+ Nieuw</button></div>
+        <input class="search" id="search" placeholder="Zoek op naam of NIF…" oninput="renderClientList()">
+        <div class="client-list" id="client-list"></div>
+      </div>
+      <div class="panel" id="detail-panel">
+        <div class="empty" style="border:0;box-shadow:none"><strong>Geen klant geselecteerd</strong>Kies links een klant of maak er een aan.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+
+<script>
+const MODELOS={
+  '303':{name:'IVA trimestral',desc:'BTW-aangifte per kwartaal',freq:'trimestral',dl:[{p:'1T',m:4,d:20},{p:'2T',m:7,d:20},{p:'3T',m:10,d:20},{p:'4T',m:1,d:30,fy:-1}]},
+  '390':{name:'Resumen anual IVA',desc:'Jaaroverzicht BTW',freq:'jaarlijks',dl:[{p:'Jaar',m:1,d:30,fy:-1}]},
+  '130':{name:'IRPF pago fraccionado',desc:'Voorheffing IB · estimación directa',freq:'trimestral',dl:[{p:'1T',m:4,d:20},{p:'2T',m:7,d:20},{p:'3T',m:10,d:20},{p:'4T',m:1,d:30,fy:-1}]},
+  '131':{name:'IRPF módulos',desc:'Voorheffing IB · módulos',freq:'trimestral',dl:[{p:'1T',m:4,d:20},{p:'2T',m:7,d:20},{p:'3T',m:10,d:20},{p:'4T',m:1,d:30,fy:-1}]},
+  '111':{name:'Retenciones trabajo',desc:'Ingehouden loon/professionals',freq:'trimestral',dl:[{p:'1T',m:4,d:20},{p:'2T',m:7,d:20},{p:'3T',m:10,d:20},{p:'4T',m:1,d:20,fy:-1}]},
+  '190':{name:'Resumen anual 111',desc:'Jaaroverzicht inhoudingen (111)',freq:'jaarlijks',dl:[{p:'Jaar',m:1,d:31,fy:-1}]},
+  '115':{name:'Retenciones alquileres',desc:'Inhoudingen huur',freq:'trimestral',dl:[{p:'1T',m:4,d:20},{p:'2T',m:7,d:20},{p:'3T',m:10,d:20},{p:'4T',m:1,d:20,fy:-1}]},
+  '180':{name:'Resumen anual 115',desc:'Jaaroverzicht huur (115)',freq:'jaarlijks',dl:[{p:'Jaar',m:1,d:31,fy:-1}]},
+  '349':{name:'Intracomunitarias',desc:'Intracommunautaire transacties',freq:'trimestral',dl:[{p:'1T',m:4,d:20},{p:'2T',m:7,d:20},{p:'3T',m:10,d:20},{p:'4T',m:1,d:30,fy:-1}]},
+  '347':{name:'Operaciones terceros',desc:'Transacties >3.005€ met derden',freq:'jaarlijks',dl:[{p:'Jaar',m:2,d:28,fy:-1}]},
+  '100':{name:'Renta (IRPF)',desc:'Jaarlijkse inkomstenbelasting',freq:'jaarlijks',dl:[{p:'Jaar',m:6,d:30,fy:-1}]},
+  '714':{name:'Patrimonio',desc:'Vermogensbelasting',freq:'jaarlijks',dl:[{p:'Jaar',m:6,d:30,fy:-1}]},
+  '200':{name:'Impuesto Sociedades',desc:'Vennootschapsbelasting',freq:'jaarlijks',dl:[{p:'Jaar',m:7,d:25,fy:-1}]}
+};
+const RECOMMEND={particular:['100'],autonomo:['303','130','390','100'],empresa:['303','111','115','390','190','200','347']};
+const DOC_PRESETS={
+  particular:['Certificado de retenciones (werkgever)','Datos fiscales AEAT','Hypotheek/huur info','Info onroerend goed'],
+  autonomo:['Facturas emitidas (kwartaal)','Facturas recibidas (kwartaal)','Bankafschriften','Modelo 036/037 (alta)'],
+  empresa:['Libros contables','Facturas trimester','Cuentas anuales','Escritura/estatutos']
+};
+const TYPE_LABEL={particular:'Particulier',autonomo:'Autónomo',empresa:'Empresa'};
+
+/* ---------- Opslag: leest/schrijft een echt bestand (klanten.json) via de lokale Node-server ---------- */
+let state={clients:[],seq:1};
+let view='agenda',filter='open',selectedId=null,saveTimer=null;
+
+async function boot(){
+  try{const r=await fetch('/data');const d=await r.json();if(d&&Array.isArray(d.clients))state=d;}
+  catch(e){setStatus('error');}
+  if(!state.seq)state.seq=(state.clients.length+1);
+  setView('agenda');
+}
+function persist(){
+  setStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{const r=await fetch('/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
+      if(!r.ok)throw 0;setStatus('saved');}
+    catch(e){setStatus('error');}
+  },250);
+}
+function setStatus(s){const el=document.getElementById('savestatus');if(!el)return;
+  el.textContent=s==='saving'?'Opslaan…':s==='saved'?'Opgeslagen ✓':s==='error'?'⚠ niet opgeslagen — server draait?':'';
+  if(s==='saved')setTimeout(()=>{if(el.textContent==='Opgeslagen ✓')el.textContent='';},1600);
+}
+
+const MONTHS=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+function uid(){return 'c'+(state.seq++);}
+function initials(n){return (n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';}
+function today0(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function deadlinesForClient(c){
+  const out=[];const now=today0();
+  const years=[now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1];
+  (c.modelos||[]).forEach(code=>{const m=MODELOS[code];if(!m)return;
+    m.dl.forEach(dl=>{years.forEach(y=>{
+      const date=new Date(y,dl.m-1,dl.d);date.setHours(0,0,0,0);
+      const iso=isoDate(date);const filed=(c.filed||{})[code+'|'+iso]||false;
+      out.push({code,name:m.name,freq:m.freq,period:dl.p,fiscalYear:y+(dl.fy||0),date,iso,filed,clientId:c.id,clientName:c.name,clientType:c.type,key:code+'|'+iso});
+    });});
+  });return out;
+}
+function allDeadlines(){let all=[];state.clients.forEach(c=>{all=all.concat(deadlinesForClient(c));});return all;}
+function daysUntil(date){return Math.round((date-today0())/86400000);}
+function urgencyClass(days,filed){if(filed)return'is-done';if(days<7)return'is-urgent';if(days<30)return'is-soon';return'is-ok';}
+
+function setView(v){view=v;
+  document.getElementById('view-agenda').style.display=v==='agenda'?'':'none';
+  document.getElementById('view-clients').style.display=v==='clients'?'':'none';
+  document.getElementById('nav-agenda').classList.toggle('active',v==='agenda');
+  document.getElementById('nav-clients').classList.toggle('active',v==='clients');
+  if(v==='agenda')renderAgenda();else renderClientList();
+}
+function setFilter(f){filter=f;document.querySelectorAll('#agenda-filter button').forEach(b=>b.classList.toggle('active',b.dataset.f===f));renderAgenda();}
+
+function renderAgenda(){
+  const all=allDeadlines();
+  let list=all.filter(x=>daysUntil(x.date)>=-30);
+  const open=list.filter(x=>!x.filed);
+  const overdue=open.filter(x=>daysUntil(x.date)<0).length;
+  const week=open.filter(x=>{const d=daysUntil(x.date);return d>=0&&d<7;}).length;
+  const month=open.filter(x=>{const d=daysUntil(x.date);return d>=0&&d<30;}).length;
+  document.getElementById('strip').innerHTML=
+    '<div class="stat"><div class="n">'+state.clients.length+'</div><div class="l">Klanten</div></div>'+
+    '<div class="stat urgent"><div class="n">'+overdue+'</div><div class="l">Verlopen / open</div></div>'+
+    '<div class="stat urgent"><div class="n">'+week+'</div><div class="l">Deze week</div></div>'+
+    '<div class="stat soon"><div class="n">'+month+'</div><div class="l">Komende 30 dagen</div></div>';
+  if(filter==='open')list=list.filter(x=>!x.filed);
+  else if(filter==='urgent')list=list.filter(x=>!x.filed&&daysUntil(x.date)<30);
+  else if(filter==='done')list=list.filter(x=>x.filed);
+  list.sort((a,b)=>a.date-b.date);
+  const el=document.getElementById('agenda');
+  if(!state.clients.length){el.innerHTML='<div class="empty"><strong>Nog geen klanten</strong>Ga naar <b>Klanten</b> en voeg je eerste klant toe. Wijs daar de relevante modelos toe — de deadlines verschijnen hier automatisch.</div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty"><strong>Niets te zien hier</strong>Geen deadlines in deze weergave.</div>';return;}
+  window._dlCards=list;
+  el.innerHTML=list.map((x,_ri)=>{
+    const days=daysUntil(x.date);const uc=urgencyClass(days,x.filed);
+    const daysTxt=x.filed?'ingediend':days<0?((-days)+'d te laat'):days===0?'vandaag':(days+' dagen');
+    return '<div class="deadline '+uc+'">'+
+      '<button class="check '+(x.filed?'done':'')+'" title="Markeer als ingediend" onclick="toggleFiled(\''+x.clientId+'\',\''+x.key+'\')">✓</button>'+
+      '<div class="cal"><div class="d">'+x.date.getDate()+'</div><div class="m">'+MONTHS[x.date.getMonth()]+'</div><div class="y">'+x.date.getFullYear()+'</div></div>'+
+      '<div class="dl-main"><div class="row1">'+
+        '<span class="modelo-tag '+(x.freq==='jaarlijks'?'anual':'')+'">M'+x.code+'</span>'+
+        '<span class="dl-name">'+x.name+'</span>'+
+        '<span class="period">'+x.period+' '+x.fiscalYear+'</span></div>'+
+        '<div class="row2"><span class="client-link" onclick="gotoClient(\''+x.clientId+'\')">'+escapeHtml(x.clientName)+'</span> · '+(TYPE_LABEL[x.clientType]||'')+'</div></div>'+
+      '<div class="days '+uc+'"><span class="big">'+(x.filed?'✓':(days<0?'!':days))+'</span>'+daysTxt+'</div>'+
+      '<button class="remind-btn" title="Herinnering genereren (AI)" onclick="openReminderModal('+_ri+')">📨</button>'+
+    '</div>';
+  }).join('');
+}
+function toggleFiled(clientId,key){const c=state.clients.find(x=>x.id===clientId);if(!c)return;c.filed=c.filed||{};c.filed[key]=!c.filed[key];persist();renderAgenda();if(view==='clients'&&selectedId===clientId)renderDetail();}
+function gotoClient(id){selectedId=id;setView('clients');renderDetail();}
+
+function renderClientList(){
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
+  let list=state.clients.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(q)list=list.filter(c=>c.name.toLowerCase().includes(q)||(c.nif||'').toLowerCase().includes(q));
+  const el=document.getElementById('client-list');
+  if(!list.length){el.innerHTML='<div style="padding:24px 16px;color:var(--ink-faint);text-align:center;font-size:13px">'+(state.clients.length?'Geen resultaten.':'Nog geen klanten.')+'</div>';return;}
+  el.innerHTML=list.map(c=>{
+    const dls=deadlinesForClient(c).filter(x=>!x.filed&&daysUntil(x.date)>=0&&daysUntil(x.date)<14);
+    return '<div class="client-item '+(c.id===selectedId?'active':'')+'" onclick="selectClient(\''+c.id+'\')">'+
+      '<div class="avatar '+c.type+'">'+initials(c.name)+'</div>'+
+      '<div class="ci-main"><div class="ci-name">'+escapeHtml(c.name)+'</div><div class="ci-meta">'+escapeHtml(c.nif||'—')+'</div></div>'+
+      (dls.length?'<span class="ci-badge due">'+dls.length+' ⏱</span>':'<span class="ci-badge">'+(c.modelos||[]).length+'m</span>')+
+    '</div>';}).join('');
+}
+function selectClient(id){selectedId=id;renderClientList();renderDetail();}
+
+function renderDetail(){
+  const c=state.clients.find(x=>x.id===selectedId);const panel=document.getElementById('detail-panel');
+  if(!c){panel.innerHTML='<div class="empty" style="border:0;box-shadow:none"><strong>Geen klant geselecteerd</strong>Kies links een klant of maak er een aan.</div>';return;}
+  c.docs=c.docs||[];
+  panel.innerHTML=
+    '<div class="detail-head"><div class="avatar '+c.type+'">'+initials(c.name)+'</div>'+
+      '<div class="detail-title"><h2>'+escapeHtml(c.name)+'</h2><span class="nif">'+escapeHtml(c.nif||'geen NIF')+'</span> <span class="type-pill '+c.type+'">'+TYPE_LABEL[c.type]+'</span></div>'+
+      '<div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="openClientModal(\''+c.id+'\')">Bewerken</button><button class="btn btn-danger btn-sm" onclick="deleteClient(\''+c.id+'\')">Verwijderen</button></div></div>'+
+    '<div class="detail-body">'+
+      '<div class="contact-row">'+
+        (c.email?'<span>✉ <b>'+escapeHtml(c.email)+'</b></span>':'')+
+        (c.phone?'<span>☎ <b>'+escapeHtml(c.phone)+'</b></span>':'')+
+        (c.regimen?'<span>Régimen: <b>'+escapeHtml(c.regimen)+'</b></span>':'')+'</div>'+
+      (c.notes?'<div class="notes">'+escapeHtml(c.notes)+'</div>':'')+
+      '<p class="block-title">Toegewezen modelos <span style="font-weight:400;text-transform:none;letter-spacing:0">'+(c.modelos||[]).length+' actief</span></p>'+
+      '<div class="modelo-grid">'+Object.keys(MODELOS).map(code=>{
+        const on=(c.modelos||[]).includes(code);const m=MODELOS[code];
+        return '<div class="modelo-card '+(on?'on':'')+'" onclick="toggleModelo(\''+c.id+'\',\''+code+'\')"><div class="box">✓</div><div><div class="mc-code">M'+code+' · '+m.name+'</div><div class="mc-desc">'+m.desc+'</div><div class="freq">'+m.freq+'</div></div></div>';
+      }).join('')+'</div>'+
+      '<p class="block-title">Documenten <button class="btn btn-ghost btn-sm" onclick="loadDocPresets(\''+c.id+'\')">+ Standaardlijst</button></p>'+
+      '<div class="docs">'+(c.docs.length?c.docs.map((d,i)=>
+        '<div class="doc '+(d.recv?'recv':'')+'"><div class="dcheck" onclick="toggleDoc(\''+c.id+'\','+i+')">✓</div><div class="dname">'+escapeHtml(d.name)+'</div><span class="dstatus">'+(d.recv?'ontvangen':'in afwachting')+'</span><button class="x" onclick="removeDoc(\''+c.id+'\','+i+')">×</button></div>'
+      ).join(''):'<div style="color:var(--ink-faint);font-size:13px;padding:4px 0">Nog geen documenten. Voeg er hieronder een toe of laad de standaardlijst.</div>')+'</div>'+
+      '<div class="doc-add"><input id="docinput" placeholder="Nieuw document…" onkeydown="if(event.key===\'Enter\')addDoc(\''+c.id+'\')"><button class="btn btn-primary btn-sm" onclick="addDoc(\''+c.id+'\')">Toevoegen</button></div>'+
+      renderLedger(c)+
+      renderAskBooks(c)+
+    '</div>';
+}
+function toggleModelo(id,code){const c=state.clients.find(x=>x.id===id);c.modelos=c.modelos||[];const i=c.modelos.indexOf(code);if(i>=0)c.modelos.splice(i,1);else c.modelos.push(code);persist();renderDetail();renderClientList();}
+function addDoc(id){const inp=document.getElementById('docinput');const v=inp.value.trim();if(!v)return;const c=state.clients.find(x=>x.id===id);c.docs=c.docs||[];c.docs.push({name:v,recv:false});persist();renderDetail();}
+function toggleDoc(id,i){const c=state.clients.find(x=>x.id===id);c.docs[i].recv=!c.docs[i].recv;persist();renderDetail();}
+function removeDoc(id,i){const c=state.clients.find(x=>x.id===id);c.docs.splice(i,1);persist();renderDetail();}
+function loadDocPresets(id){const c=state.clients.find(x=>x.id===id);c.docs=c.docs||[];(DOC_PRESETS[c.type]||[]).forEach(n=>{if(!c.docs.some(d=>d.name===n))c.docs.push({name:n,recv:false});});persist();renderDetail();}
+
+/* ---------- Boekhouding (kas/facturen + reconciliatie) ---------- */
+function eur(n){return (Number(n)||0).toLocaleString('nl-NL',{style:'currency',currency:'EUR'});}
+function ensureLedger(c){if(!c.ledger)c.ledger={start:0,startDate:'',actual:null,entries:[]};return c.ledger;}
+function ledgerCalc(L){
+  let incBase=0,expBase=0,ivaRep=0,ivaSop=0,totIn=0,totOut=0;
+  L.entries.forEach(e=>{const base=Number(e.base)||0;const iva=base*(Number(e.ivaPct)||0)/100;const tot=base+iva;
+    if(e.type==='income'){incBase+=base;ivaRep+=iva;totIn+=tot;}else{expBase+=base;ivaSop+=iva;totOut+=tot;}});
+  const expected=(Number(L.start)||0)+totIn-totOut;
+  const diff=(L.actual===null||L.actual===undefined||L.actual==='')?null:(Number(L.actual)-expected);
+  return {incBase,expBase,ivaRep,ivaSop,ivaSaldo:ivaRep-ivaSop,totIn,totOut,expected,diff};
+}
+function renderLedger(c){
+  const L=ensureLedger(c);const k=ledgerCalc(L);
+  const yr=new Date().getFullYear();
+  const q=[{rep:0,sop:0},{rep:0,sop:0},{rep:0,sop:0},{rep:0,sop:0}];
+  L.entries.forEach(e=>{const d=new Date(e.date);if(isNaN(d.getTime())||d.getFullYear()!==yr)return;const base=Number(e.base)||0;const iva=base*(Number(e.ivaPct)||0)/100;const qi=Math.floor(d.getMonth()/3);if(e.type==='income')q[qi].rep+=iva;else q[qi].sop+=iva;});
+  const today=isoDate(new Date());
+  const entries=L.entries.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  let html='<p class="block-title" style="margin-top:6px">Boekhouding · kas &amp; facturen</p>';
+  html+='<div class="led-grid">'+
+    '<div class="led-card"><div class="lc-l">Omzet (excl. btw)</div><div class="lc-v">'+eur(k.incBase)+'</div></div>'+
+    '<div class="led-card"><div class="lc-l">Kosten (excl. btw)</div><div class="lc-v">'+eur(k.expBase)+'</div></div>'+
+    '<div class="led-card '+(k.ivaSaldo>=0?'neg':'pos')+'"><div class="lc-l">Btw '+(k.ivaSaldo>=0?'te betalen':'terug')+'</div><div class="lc-v">'+eur(Math.abs(k.ivaSaldo))+'</div></div>'+
+    '<div class="led-card"><div class="lc-l">Verwacht banksaldo</div><div class="lc-v">'+eur(k.expected)+'</div></div>'+
+  '</div>';
+  html+=renderBankBlock(c,L);
+  html+='<div class="recon">'+
+    '<div class="rc"><label>Startsaldo bank</label><input type="number" step="0.01" value="'+(L.start!==undefined&&L.start!==null?L.start:'')+'" onchange="setLedgerStart(\''+c.id+'\',this.value)"></div>'+
+    '<div class="rc"><label>Per datum</label><input type="date" value="'+(L.startDate||'')+'" onchange="setLedgerStartDate(\''+c.id+'\',this.value)"></div>'+
+    '<span class="arrow">→</span>'+
+    '<div class="rc"><label>Werkelijk banksaldo nu</label><input type="number" step="0.01" placeholder="optioneel" value="'+(L.actual!==null&&L.actual!==undefined?L.actual:'')+'" onchange="setLedgerActual(\''+c.id+'\',this.value)"></div>';
+  if(k.diff!==null){const ok=Math.abs(k.diff)<0.01;
+    html+='<div class="diff '+(ok?'ok':'warn')+'"><div class="dv">'+(ok?'✓ klopt':eur(k.diff))+'</div><div class="dl">'+(ok?'alles verklaard':(k.diff>0?'méér op de bank dan geboekt — ontbrekende factuur/inkomst?':'minder op de bank dan geboekt — ontbrekende uitgave?'))+'</div></div>';
+  }else{html+='<div class="diff"><div class="dl">Vul het werkelijke banksaldo in om te zien of er nog iets ontbreekt.</div></div>';}
+  html+='</div>';
+  html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
+    '<select id="doc-type-sel" style="border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:12.5px;background:var(--surface);color:var(--ink)">'+
+      '<option value="auto">Auto-detect type</option>'+
+      '<option value="factura">Factura / ticket</option>'+
+      '<option value="nomina">Nómina</option>'+
+      '<option value="certificado_retenciones">Certificado retenciones</option>'+
+      '<option value="resumen_anual">Resumen anual</option>'+
+    '</select>'+
+    '<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'inv-file\').click()">✨ Inlezen met AI</button>'+
+    '<input type="file" id="inv-file" accept="application/pdf,image/*" style="display:none" onchange="invoiceFilePicked(event,\''+c.id+'\',\''+c.type+'\')">'+
+    '<span id="inv-status" style="font-size:12.5px;color:var(--ink-soft)"></span>'+
+  '</div>';
+  html+='<div class="entry-form">'+
+    '<div class="ef"><label>Datum</label><input type="date" id="led-date" value="'+today+'"></div>'+
+    '<div class="ef"><label>Type</label><select id="led-type"><option value="income">Inkomst</option><option value="expense">Uitgave</option></select></div>'+
+    '<div class="ef"><label>Omschrijving</label><input id="led-desc" placeholder="bv. Factuur 2024-014 / kantoorhuur"></div>'+
+    '<div class="ef"><label>Bedrag excl.</label><input type="number" step="0.01" id="led-base" placeholder="0,00" onkeydown="if(event.key===\'Enter\')addLedgerEntry(\''+c.id+'\')"></div>'+
+    '<div class="ef"><label>Btw %</label><input type="number" step="1" id="led-iva" value="21"></div>'+
+    '<div class="ef"><button class="btn btn-primary btn-sm" style="width:100%" onclick="addLedgerEntry(\''+c.id+'\')">+ Boek</button></div>'+
+  '</div>';
+  if(entries.length){
+    html+='<table class="entry-table"><thead><tr><th>Datum</th><th>Type</th><th>Omschrijving</th><th style="text-align:right">Excl.</th><th style="text-align:right">Btw</th><th style="text-align:right">Totaal</th><th></th></tr></thead><tbody>';
+    entries.forEach(e=>{const base=Number(e.base)||0;const iva=base*(Number(e.ivaPct)||0)/100;const tot=base+iva;
+      html+='<tr><td class="num">'+(e.date||'')+'</td><td><span class="tg '+e.type+'">'+(e.type==='income'?'IN':'UIT')+'</span></td><td>'+escapeHtml(e.desc||'')+'</td><td class="num">'+eur(base)+'</td><td class="num">'+eur(iva)+' <span style="color:var(--ink-faint)">('+(Number(e.ivaPct)||0)+'%)</span></td><td class="num">'+eur(tot)+'</td><td><button class="del" onclick="removeLedgerEntry(\''+c.id+'\',\''+e.id+'\')">×</button></td></tr>';
+    });
+    html+='</tbody></table>';
+    html+='<p class="block-title" style="margin-top:18px">Btw per kwartaal '+yr+' <span style="font-weight:400;text-transform:none;letter-spacing:0">(input voor modelo 303)</span></p>';
+    html+='<table class="qtbl"><thead><tr><th>Kwartaal</th><th>Btw verkopen</th><th>Btw inkopen</th><th>Saldo 303</th></tr></thead><tbody>';
+    for(let i=0;i<4;i++){const s=q[i].rep-q[i].sop;html+='<tr><td>'+(i+1)+'T '+yr+'</td><td>'+eur(q[i].rep)+'</td><td>'+eur(q[i].sop)+'</td><td style="color:'+(s>=0?'var(--urgent)':'var(--done)')+'">'+eur(s)+'</td></tr>';}
+    html+='</tbody></table>';
+  }else{html+='<div style="color:var(--ink-faint);font-size:13px;padding:8px 0">Nog niets geboekt. Voeg hierboven facturen (inkomsten) en uitgaven toe.</div>';}
+  return html;
+}
+function setLedgerStart(id,v){const c=state.clients.find(x=>x.id===id);ensureLedger(c).start=v===''?0:Number(v);persist();renderDetail();}
+function setLedgerStartDate(id,v){const c=state.clients.find(x=>x.id===id);ensureLedger(c).startDate=v;persist();}
+function setLedgerActual(id,v){const c=state.clients.find(x=>x.id===id);ensureLedger(c).actual=v===''?null:Number(v);persist();renderDetail();}
+function addLedgerEntry(id){const c=state.clients.find(x=>x.id===id);const L=ensureLedger(c);
+  const base=parseFloat(document.getElementById('led-base').value);
+  if(isNaN(base)){document.getElementById('led-base').focus();return;}
+  const ivaPct=parseFloat(document.getElementById('led-iva').value);
+  L.entries.push({id:'e'+Date.now(),date:document.getElementById('led-date').value||isoDate(new Date()),type:document.getElementById('led-type').value,desc:document.getElementById('led-desc').value.trim(),base,ivaPct:isNaN(ivaPct)?0:ivaPct});
+  persist();renderDetail();
+}
+function removeLedgerEntry(id,eid){const c=state.clients.find(x=>x.id===id);const L=ensureLedger(c);L.entries=L.entries.filter(e=>e.id!==eid);persist();renderDetail();}
+
+/* ---------- Bankafschrift importeren (CSV) ---------- */
+let _bankTmp=null;
+function renderBankBlock(c,L){
+  let h='<p class="block-title" style="margin-top:4px">Bankafschrift</p><div class="bank-block">';
+  if(L.bank){const b=L.bank;
+    h+='<div class="bank-summary"><div class="bs-main"><div class="bs-file">📄 '+escapeHtml(b.fileName||'afschrift')+'</div>'+
+       '<div class="bs-meta">'+(b.period?escapeHtml(b.period[0]+' → '+b.period[1]):'')+' · '+b.movements.length+' mutaties</div></div>'+
+       '<div class="bs-bal"><div class="bl">Startsaldo</div><b>'+eur(b.start)+'</b></div>'+
+       '<div class="bs-bal"><div class="bl">Eindsaldo</div><b>'+eur(b.end)+'</b></div>'+
+       '<div class="bank-actions"><button class="btn btn-ghost btn-sm" onclick="toggleBankMovements(\''+c.id+'\')">Mutaties</button><button class="btn btn-ghost btn-sm" onclick="startBankImport(\''+c.id+'\')">Vervangen</button><button class="btn btn-danger btn-sm" onclick="removeBankImport(\''+c.id+'\')">×</button></div></div>';
+    h+='<div id="bank-mov-zone"></div>';
+  }else{
+    h+='<button class="btn btn-ghost btn-sm" onclick="startBankImport(\''+c.id+'\')">+ Bankafschrift importeren (CSV)</button>';
+  }
+  h+='<div id="bank-import-zone"></div></div>';
+  return h;
+}
+function toggleBankMovements(id){const z=document.getElementById('bank-mov-zone');if(!z)return;
+  if(z.innerHTML){z.innerHTML='';return;}
+  const c=state.clients.find(x=>x.id===id);const b=ensureLedger(c).bank;if(!b)return;
+  let h='<div class="bank-mov"><table><tbody>';
+  b.movements.forEach(m=>{h+='<tr><td class="num">'+escapeHtml(m.date||'')+'</td><td>'+escapeHtml(m.desc||'')+'</td><td class="num '+(m.amount>=0?'pos':'neg')+'">'+eur(m.amount)+'</td></tr>';});
+  h+='</tbody></table></div>';z.innerHTML=h;
+}
+function startBankImport(id){const z=document.getElementById('bank-import-zone');if(!z)return;
+  z.innerHTML='<div class="bank-import"><label class="bi-file">Kies CSV-bestand<input type="file" accept=".csv,text/csv,text/plain" style="display:none" onchange="bankFilePicked(event,\''+id+'\')"></label><span class="bi-hint">Exporteer de rekeningmutaties bij de bank als CSV en kies dat bestand.</span></div>';
+}
+function cancelBankImport(){const z=document.getElementById('bank-import-zone');if(z)z.innerHTML='';_bankTmp=null;}
+function bankFilePicked(e,id){const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{_bankTmp=parseCsvRaw(r.result);_bankTmp.fileName=f.name;renderBankMapping(id);};
+  r.readAsText(f,'utf-8');
+}
+function parseCsvRaw(text){
+  text=text.replace(/^\uFEFF/,'');
+  const lines=text.split(/\r\n|\n|\r/).filter(l=>l.trim()!=='');
+  const first=lines[0]||'';
+  const counts={';':first.split(';').length-1,',':first.split(',').length-1,'\t':first.split('\t').length-1};
+  let delim=';',best=-1;for(const d in counts){if(counts[d]>best){best=counts[d];delim=d;}}
+  const rows=lines.map(l=>splitCsvLine(l,delim));
+  return {rows,delim};
+}
+function splitCsvLine(line,delim){const out=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){const ch=line[i];
+    if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
+    else{if(ch==='"')q=true;else if(ch===delim){out.push(cur);cur='';}else cur+=ch;}}
+  out.push(cur);return out.map(s=>s.trim());
+}
+function parseAmount(s){
+  if(s===undefined||s===null)return NaN;
+  s=String(s).trim().replace(/\s/g,'').replace(/[€$]/g,'');
+  if(!s)return NaN;
+  let neg=false;
+  if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1);}
+  if(s.indexOf('-')>-1){neg=true;s=s.replace(/-/g,'');}
+  const lc=s.lastIndexOf(','),ld=s.lastIndexOf('.');
+  if(lc>-1&&ld>-1){if(lc>ld){s=s.replace(/\./g,'').replace(',','.');}else{s=s.replace(/,/g,'');}}
+  else if(lc>-1){s=s.replace(/\./g,'').replace(',','.');}
+  const n=parseFloat(s);if(isNaN(n))return NaN;return neg?-n:n;
+}
+function parseDateCell(s){s=String(s).trim();
+  let m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(m){let yy=m[3];if(yy.length===2)yy='20'+yy;return yy+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');}
+  m=s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  if(m){return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');}
+  return s;
+}
+function guessCol(headers,res){for(let i=0;i<headers.length;i++){const h=(headers[i]||'').toLowerCase();for(const re of res){if(re.test(h))return i;}}return 0;}
+function renderBankMapping(id){const t=_bankTmp;const z=document.getElementById('bank-import-zone');if(!t||!z)return;
+  const headers=t.rows[0]||[];
+  const gd=guessCol(headers,[/fecha/,/datum/,/date/]);
+  const gc=guessCol(headers,[/concepto/,/descrip/,/omschrijving/,/detalle/,/concept/,/movimiento/]);
+  const ga=guessCol(headers,[/importe/,/bedrag/,/amount/,/cargo/,/abono/]);
+  let gb=-1;for(let i=0;i<headers.length;i++){if(/saldo|balance/.test((headers[i]||'').toLowerCase()))gb=i;}
+  const opt=sel=>headers.map((h,i)=>'<option value="'+i+'" '+(i===sel?'selected':'')+'>'+escapeHtml(String(h||('kolom '+(i+1))).slice(0,40))+'</option>').join('');
+  let prev='<div class="bm-preview"><table><thead><tr>'+headers.map(h=>'<th>'+escapeHtml(String(h||'').slice(0,22))+'</th>').join('')+'</tr></thead><tbody>';
+  t.rows.slice(1,5).forEach(r=>{prev+='<tr>'+r.map(c=>'<td>'+escapeHtml(String(c||'').slice(0,22))+'</td>').join('')+'</tr>';});
+  prev+='</tbody></table></div>';
+  z.innerHTML='<div class="bank-import"><div style="font-weight:600;margin-bottom:2px">Kolommen koppelen — '+escapeHtml(t.fileName||'')+'</div>'+
+    '<div style="font-size:12px;color:var(--ink-soft);margin-bottom:6px">Controleer de voorbeeldregels en kies de juiste kolommen.</div>'+prev+
+    '<div class="bm-grid">'+
+      '<div class="bm-f"><label>Datum</label><select id="bm-date">'+opt(gd)+'</select></div>'+
+      '<div class="bm-f"><label>Omschrijving</label><select id="bm-desc">'+opt(gc)+'</select></div>'+
+      '<div class="bm-f"><label>Bedrag (+ binnen / − uit)</label><select id="bm-amount">'+opt(ga)+'</select></div>'+
+      '<div class="bm-f"><label>Saldo-kolom (optioneel)</label><select id="bm-balance"><option value="">— geen —</option>'+headers.map((h,i)=>'<option value="'+i+'" '+(i===gb?'selected':'')+'>'+escapeHtml(String(h||('kolom '+(i+1))).slice(0,40))+'</option>').join('')+'</select></div>'+
+      '<div class="bm-f"><label>Beginsaldo afschrift (alleen als geen saldo-kolom)</label><input id="bm-open" type="number" step="0.01" placeholder="0,00"></div>'+
+      '<div class="bm-f" style="display:flex;align-items:flex-end"><label style="display:flex;align-items:center;gap:6px;text-transform:none;color:var(--ink)"><input type="checkbox" id="bm-header" checked> eerste rij is een kop</label></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="doBankImport(\''+id+'\')">Importeren</button><button class="btn btn-ghost btn-sm" onclick="cancelBankImport()">Annuleren</button></div></div>';
+}
+function doBankImport(id){const t=_bankTmp;if(!t)return;
+  const di=+document.getElementById('bm-date').value;
+  const ci=+document.getElementById('bm-desc').value;
+  const ai=+document.getElementById('bm-amount').value;
+  const bv=document.getElementById('bm-balance').value;
+  const hasHeader=document.getElementById('bm-header').checked;
+  const dataRows=t.rows.slice(hasHeader?1:0);
+  const movements=[];
+  dataRows.forEach(r=>{const amount=parseAmount(r[ai]);if(isNaN(amount))return;
+    const mv={date:parseDateCell(r[di]||''),desc:(r[ci]||'').trim(),amount};
+    if(bv!==''){const b=parseAmount(r[+bv]);if(!isNaN(b))mv.balance=b;}
+    movements.push(mv);});
+  if(!movements.length){alert('Geen mutaties herkend. Controleer welke kolom het bedrag bevat.');return;}
+  movements.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const sumMov=movements.reduce((s,m)=>s+m.amount,0);
+  let start,end;
+  const lastBal=movements[movements.length-1].balance;
+  if(lastBal!==undefined){end=lastBal;start=end-sumMov;}
+  else{const open=parseAmount(document.getElementById('bm-open').value);start=isNaN(open)?0:open;end=start+sumMov;}
+  const c=state.clients.find(x=>x.id===id);const L=ensureLedger(c);
+  L.bank={fileName:t.fileName,importedAt:isoDate(new Date()),movements,start:Math.round(start*100)/100,end:Math.round(end*100)/100,period:[movements[0].date,movements[movements.length-1].date]};
+  L.start=L.bank.start;L.actual=L.bank.end;
+  _bankTmp=null;persist();renderDetail();
+}
+function removeBankImport(id){if(!confirm('Bankafschrift verwijderen? Je geboekte facturen en uitgaven blijven staan.'))return;const c=state.clients.find(x=>x.id===id);delete ensureLedger(c).bank;persist();renderDetail();}
+
+/* ---------- AI document reader (via lokale server -> Anthropic API) ---------- */
+function invoiceFilePicked(e,id,clientType){
+  const f=e.target.files[0];if(!f)return;
+  const st=document.getElementById('inv-status');if(st)st.textContent='Bezig met lezen…';
+  const dtSel=document.getElementById('doc-type-sel');
+  const docType=dtSel?dtSel.value:'auto';
+  const c=state.clients.find(x=>x.id===id);
+  const r=new FileReader();
+  r.onload=async()=>{
+    const data=String(r.result).split(',')[1];
+    try{
+      const resp=await fetch('/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        mime:f.type||'application/pdf',data,docType,
+        clientNif:c?(c.nif||''):'',clientName:c?c.name:'',clientType:clientType||''
+      })});
+      const j=await resp.json();
+      if(!j.ok){
+        if(st)st.innerHTML=(j.error==='NO_KEY')
+          ?'Geen API-sleutel — zet je sleutel in <b>api-key.txt</b> (zie SETUP.md).'
+          :'Niet gelukt: '+escapeHtml(String(j.error||''));
+        return;
+      }
+      if(st)st.textContent='';
+      openExtractConfirm(j.data||{},j.modeloSuggestion,id);
+    }catch(err){if(st)st.textContent='Kon de server niet bereiken. Draait server.js?';}
+  };
+  r.onerror=()=>{if(st)st.textContent='Kon het bestand niet lezen.';};
+  r.readAsDataURL(f);
+  e.target.value='';
+}
+
+function openClientModal(id){
+  const c=id?state.clients.find(x=>x.id===id):null;const t=c?c.type:'autonomo';
+  document.getElementById('modal-root').innerHTML=
+  '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    '<div class="modal-head">'+(c?'Klant bewerken':'Nieuwe klant')+'<button class="x" onclick="closeModal()">×</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="field"><label>Naam</label><input id="f-name" value="'+(c?escapeAttr(c.name):'')+'" placeholder="Voor- en achternaam of bedrijf"></div>'+
+      '<div class="field"><label>Type</label><div class="type-choose">'+
+        ['particular','autonomo','empresa'].map(tp=>'<label><input type="radio" name="ctype" value="'+tp+'" '+(t===tp?'checked':'')+' onchange="suggestModelos()"><span style="display:block">'+TYPE_LABEL[tp]+'</span></label>').join('')+'</div></div>'+
+      '<div class="field"><label>NIF / NIE</label><input id="f-nif" value="'+(c?escapeAttr(c.nif||''):'')+'" placeholder="X1234567Y"></div>'+
+      '<div class="field"><label>E-mail</label><input id="f-email" value="'+(c?escapeAttr(c.email||''):'')+'"></div>'+
+      '<div class="field"><label>Telefoon</label><input id="f-phone" value="'+(c?escapeAttr(c.phone||''):'')+'"></div>'+
+      '<div class="field"><label>Régimen / fiscale opmerking</label><input id="f-regimen" value="'+(c?escapeAttr(c.regimen||''):'')+'" placeholder="bv. estimación directa"></div>'+
+      '<div class="field"><label>Notities</label><textarea id="f-notes" placeholder="Vrije notities…">'+(c?escapeHtml(c.notes||''):'')+'</textarea></div>'+
+      (c?'':'<div class="hint" id="suggest-hint"></div>')+
+    '</div>'+
+    '<div class="modal-foot"><span></span><div style="display:flex;gap:10px"><button class="btn btn-ghost" onclick="closeModal()">Annuleren</button><button class="btn btn-primary" onclick="saveClient(\''+(c?c.id:'')+'\')">'+(c?'Opslaan':'Aanmaken')+'</button></div></div>'+
+  '</div></div>';
+  if(!c)suggestModelos();
+  setTimeout(()=>{const n=document.getElementById('f-name');if(n)n.focus();},30);
+}
+function suggestModelos(){const hint=document.getElementById('suggest-hint');if(!hint)return;const t=document.querySelector('input[name=ctype]:checked').value;const rec=(RECOMMEND[t]||[]).map(x=>'M'+x).join(', ');hint.innerHTML='Aanbevolen modelos worden automatisch toegewezen: <b>'+(rec||'—')+'</b> (achteraf aanpasbaar).';}
+function saveClient(id){
+  const name=document.getElementById('f-name').value.trim();if(!name){document.getElementById('f-name').focus();return;}
+  const type=document.querySelector('input[name=ctype]:checked').value;
+  const data={name,type,nif:val('f-nif'),email:val('f-email'),phone:val('f-phone'),regimen:val('f-regimen'),notes:val('f-notes')};
+  if(id){Object.assign(state.clients.find(x=>x.id===id),data);}
+  else{const c={id:uid(),...data,modelos:[...(RECOMMEND[type]||[])],docs:[],filed:{}};state.clients.push(c);selectedId=c.id;}
+  persist();closeModal();
+  if(view==='clients'){renderClientList();renderDetail();}else renderAgenda();
+}
+function deleteClient(id){const c=state.clients.find(x=>x.id===id);if(!confirm('Klant "'+c.name+'" verwijderen? Dit kan niet ongedaan worden gemaakt.'))return;state.clients=state.clients.filter(x=>x.id!==id);if(selectedId===id)selectedId=null;persist();renderClientList();renderDetail();}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+function val(id){return (document.getElementById(id).value||'').trim();}
+
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='asesoria-backup-'+isoDate(new Date())+'.json';a.click();}
+function importData(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.clients))throw 0;
+    if(!confirm('Backup laden? Dit overschrijft de huidige gegevens.'))return;
+    state=d;state.seq=state.seq||(state.clients.length+1);selectedId=null;persist();setView(view);alert('Backup geladen.');
+  }catch(err){alert('Ongeldig backupbestand.');}};r.readAsText(file);e.target.value='';}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function escapeAttr(s){return escapeHtml(s).replace(/"/g,'&quot;');}
+
+/* ---------- AI extraction — confirm modal ---------- */
+const _DT_LABELS={factura:'Factura / ticket',nomina:'Nómina',certificado_retenciones:'Certificado de retenciones',resumen_anual:'Resumen anual',desconocido:'Onbekend documenttype'};
+const _FIELD_LABELS={direction:'Richting',date:'Datum',counterparty:'Tegenpartij',counterpartyNif:'NIF tegenpartij',desc:'Omschrijving',base:'Base imponible',ivaPct:'BTW %',ivaAmount:'BTW-bedrag',total:'Totaal',period:'Periode',employer:'Werkgever',employerNif:'NIF werkgever',employee:'Werknemer',employeeNif:'NIF werknemer',grossSalary:'Bruto salaris',irpfPct:'IRPF %',irpfAmount:'IRPF-bedrag',ssWorker:'SS werknemer',net:'Netto',fiscalYear:'Belastingjaar',payer:'Betaler',payerNif:'NIF betaler',recipient:'Ontvanger',recipientNif:'NIF ontvanger',incomeTotal:'Totaal inkomen',retencionesTotal:'Totaal retenciones',kind:'Soort',totalBase:'Totaal basis',totalTax:'Totaal belasting',note:'Opmerking',fieldsFound:'Gevonden velden'};
+
+function openExtractConfirm(extracted,modeloSuggestion,clientId){
+  const dt=extracted.docType||'desconocido';
+  let fields='<div class="confirm-fields">';
+  Object.entries(extracted).forEach(([k,v])=>{
+    if(k==='docType')return;
+    const lbl=_FIELD_LABELS[k]||k;
+    let disp=typeof v==='object'?JSON.stringify(v):typeof v==='number'?v.toLocaleString('nl-NL'):String(v??'—');
+    fields+='<div class="cf-item"><div class="cf-label">'+lbl+'</div><div class="cf-value">'+escapeHtml(disp)+'</div></div>';
+  });
+  fields+='</div>';
+  let modeloHtml='';
+  if(modeloSuggestion&&(modeloSuggestion.modelos||[]).length){
+    modeloHtml='<div class="modelo-sug"><div class="ms-codes">→ Modelo '+modeloSuggestion.modelos.join(', ')+' (suggestie)</div><div>'+escapeHtml(modeloSuggestion.note||'')+'</div></div>';
+  }else if(modeloSuggestion&&modeloSuggestion.note){
+    modeloHtml='<div class="modelo-sug"><div>'+escapeHtml(modeloSuggestion.note)+'</div></div>';
+  }
+  const disclaimer='<div class="cf-disclaimer">⚠ Controleer alle uitgelezen bedragen vóór gebruik. De AI assisteert bij gegevensinvoer — de asesor is verantwoordelijk voor de juistheid en voor elke indiening.</div>';
+  let ledgerForm='';
+  if(dt==='factura'){
+    const isIn=extracted.direction==='emitida';
+    const base=typeof extracted.base==='number'?extracted.base:'';
+    const ivaPct=typeof extracted.ivaPct==='number'?extracted.ivaPct:21;
+    const date=extracted.date||'';
+    const desc=extracted.desc||(extracted.counterparty?'Factuur '+extracted.counterparty:'');
+    ledgerForm='<p style="font-weight:600;font-size:13px;margin:14px 0 6px">Toevoegen aan boekhouding:</p>'+
+      '<div class="cf-form">'+
+        '<div><div class="cff-l">Datum</div><input type="date" id="cf-date" value="'+escapeAttr(date)+'"></div>'+
+        '<div><div class="cff-l">Type</div><select id="cf-type"><option value="income" '+(isIn?'selected':'')+'>Inkomst</option><option value="expense" '+(!isIn?'selected':'')+'>Uitgave</option></select></div>'+
+        '<div><div class="cff-l">Omschrijving</div><input id="cf-desc" value="'+escapeAttr(desc)+'"></div>'+
+        '<div><div class="cff-l">Bedrag excl.</div><input type="number" step="0.01" id="cf-base" value="'+base+'"></div>'+
+        '<div><div class="cff-l">Btw %</div><input type="number" step="1" id="cf-iva" value="'+ivaPct+'"></div>'+
+      '</div>';
+  }
+  const footer=dt==='factura'
+    ?'<button class="btn btn-ghost" onclick="closeModal()">Sluiten</button><button class="btn btn-primary" onclick="applyExtractToLedger(\''+clientId+'\')">Boeken</button>'
+    :'<button class="btn btn-primary" onclick="closeModal()">Sluiten</button>';
+  document.getElementById('modal-root').innerHTML=
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:560px">'+
+      '<div class="modal-head"><span>'+escapeHtml(_DT_LABELS[dt]||dt)+' uitgelezen</span><button class="x" onclick="closeModal()">×</button></div>'+
+      '<div class="modal-body">'+fields+modeloHtml+disclaimer+ledgerForm+'</div>'+
+      '<div class="modal-foot"><span></span><div style="display:flex;gap:8px">'+footer+'</div></div>'+
+    '</div></div>';
+}
+
+function applyExtractToLedger(clientId){
+  const c=state.clients.find(x=>x.id===clientId);if(!c){closeModal();return;}
+  const L=ensureLedger(c);
+  const base=parseFloat(document.getElementById('cf-base').value);
+  if(isNaN(base)){document.getElementById('cf-base').focus();return;}
+  const ivaPct=parseFloat(document.getElementById('cf-iva').value);
+  L.entries.push({id:'e'+Date.now(),date:document.getElementById('cf-date').value||isoDate(new Date()),type:document.getElementById('cf-type').value,desc:(document.getElementById('cf-desc').value||'').trim(),base,ivaPct:isNaN(ivaPct)?0:ivaPct});
+  persist();closeModal();
+  if(view==='clients'&&selectedId===clientId)renderDetail();
+}
+
+/* ---------- Ask your books (AI) ---------- */
+function renderAskBooks(c){
+  return '<div class="ask-zone">'+
+    '<p class="block-title">Ask your books <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink-faint)">(AI · grounded in deze klantdata)</span></p>'+
+    '<textarea id="ask-q" placeholder="Stel een vraag over de gegevens van '+escapeHtml(c.name)+'… (bv. hoeveel IVA in Q2? wat is het netto resultaat?)"></textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:6px;align-items:center">'+
+      '<button class="btn btn-ghost btn-sm" onclick="askBooks(\''+c.id+'\')">Vraag →</button>'+
+      '<span id="ask-st" style="font-size:12px;color:var(--ink-soft)"></span>'+
+    '</div>'+
+    '<div class="ask-resp" id="ask-resp"></div>'+
+  '</div>';
+}
+
+async function askBooks(clientId){
+  const q=(document.getElementById('ask-q').value||'').trim();
+  if(!q){document.getElementById('ask-q').focus();return;}
+  const st=document.getElementById('ask-st');
+  const resp=document.getElementById('ask-resp');
+  if(st)st.textContent='Bezig…';
+  if(resp){resp.style.display='none';resp.textContent='';}
+  try{
+    const r=await fetch('/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clientId,question:q})});
+    const j=await r.json();
+    if(!j.ok){if(st)st.textContent=(j.error==='NO_KEY')?'Geen API-sleutel — zet je sleutel in api-key.txt (zie SETUP.md).':'Fout: '+escapeHtml(j.error||'onbekend');return;}
+    if(st)st.textContent='';
+    if(resp){resp.textContent=j.answer;resp.style.display='block';}
+  }catch(err){if(st)st.textContent='Kon de server niet bereiken. Draait server.js?';}
+}
+
+/* ---------- Multilingual deadline reminders (AI) ---------- */
+function openReminderModal(i){
+  const x=(window._dlCards||[])[i];if(!x)return;
+  document.getElementById('modal-root').innerHTML=
+    '<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:440px">'+
+      '<div class="modal-head">Herinnering genereren (AI)<button class="x" onclick="closeModal()">×</button></div>'+
+      '<div class="modal-body">'+
+        '<div class="field"><label>Taal</label><select id="remind-lang"><option value="nl">Nederlands</option><option value="es">Español</option><option value="en">English</option></select></div>'+
+        '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px">'+
+          'Modelo <b>'+escapeHtml(x.code)+'</b> · '+escapeHtml(x.name)+' · '+escapeHtml(x.period+' '+x.fiscalYear)+
+          ' · deadline <b>'+escapeHtml(x.iso)+'</b><br>Klant: <b>'+escapeHtml(x.clientName)+'</b></div>'+
+        '<div id="remind-st" style="font-size:12px;color:var(--ink-soft)"></div>'+
+        '<div id="remind-out" style="display:none;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13.5px;white-space:pre-wrap;margin-top:8px;line-height:1.5"></div>'+
+      '</div>'+
+      '<div class="modal-foot">'+
+        '<button class="btn btn-ghost btn-sm" id="remind-copy" style="display:none" onclick="navigator.clipboard.writeText(document.getElementById(\'remind-out\').textContent)">Kopiëren</button>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn btn-ghost" onclick="closeModal()">Sluiten</button>'+
+          '<button class="btn btn-primary" onclick="doGenerateReminder('+i+')">Genereren</button>'+
+        '</div>'+
+      '</div>'+
+    '</div></div>';
+}
+
+async function doGenerateReminder(i){
+  const x=(window._dlCards||[])[i];if(!x)return;
+  const lang=document.getElementById('remind-lang').value;
+  const st=document.getElementById('remind-st');
+  const out=document.getElementById('remind-out');
+  const copyBtn=document.getElementById('remind-copy');
+  if(st)st.textContent='Genereren…';
+  if(out)out.style.display='none';
+  if(copyBtn)copyBtn.style.display='none';
+  try{
+    const r=await fetch('/remind',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      clientName:x.clientName,modeloCode:x.code,modeloName:x.name,
+      period:x.period+' '+x.fiscalYear,deadline:x.iso,language:lang
+    })});
+    const j=await r.json();
+    if(!j.ok){if(st)st.textContent=(j.error==='NO_KEY')?'Geen API-sleutel.':'Fout: '+escapeHtml(j.error||'');return;}
+    if(st)st.textContent='';
+    if(out){out.textContent=j.text;out.style.display='block';}
+    if(copyBtn)copyBtn.style.display='';
+  }catch(err){if(st)st.textContent='Kon de server niet bereiken.';}
+}
+
+boot();
+</script>
+</body>
+</html>

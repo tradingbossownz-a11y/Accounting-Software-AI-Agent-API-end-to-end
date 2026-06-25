@@ -1,0 +1,161 @@
+{
+  "seq": 8,
+  "clients": [
+    {
+      "id": "c1",
+      "name": "Jansen Consultoría (demo)",
+      "type": "autonomo",
+      "nif": "X0000001R",
+      "email": "demo.jansen@example.com",
+      "phone": "+34 600 000 001",
+      "regimen": "estimación directa",
+      "notes": "Demo client — fictional data.",
+      "modelos": ["303", "130", "390", "100"],
+      "docs": [
+        {"name": "Facturas emitidas (kwartaal)", "recv": true},
+        {"name": "Facturas recibidas (kwartaal)", "recv": false},
+        {"name": "Bankafschriften", "recv": true}
+      ],
+      "filed": {"303|2026-04-20": true},
+      "ledger": {
+        "start": 1200,
+        "startDate": "2026-01-01",
+        "actual": null,
+        "entries": [
+          {"id": "e101", "date": "2026-01-14", "type": "income", "desc": "Advies project A", "base": 1500, "ivaPct": 21},
+          {"id": "e102", "date": "2026-02-03", "type": "expense", "desc": "Software-abonnement", "base": 49, "ivaPct": 21},
+          {"id": "e103", "date": "2026-03-22", "type": "income", "desc": "Maandelijkse retainer", "base": 800, "ivaPct": 21}
+        ]
+      }
+    },
+    {
+      "id": "c2",
+      "name": "De Vries Webdiensten (demo)",
+      "type": "autonomo",
+      "nif": "Y0000002W",
+      "email": "demo.devries@example.com",
+      "phone": "+34 600 000 002",
+      "regimen": "estimación directa",
+      "notes": "Demo client — fictional data.",
+      "modelos": ["303", "130", "390", "100"],
+      "docs": [
+        {"name": "Facturas emitidas (kwartaal)", "recv": false},
+        {"name": "Modelo 036/037 (alta)", "recv": true}
+      ],
+      "filed": {},
+      "ledger": {
+        "start": 300,
+        "startDate": "2026-01-01",
+        "actual": null,
+        "entries": [
+          {"id": "e201", "date": "2026-01-30", "type": "income", "desc": "Website oplevering", "base": 2400, "ivaPct": 21},
+          {"id": "e202", "date": "2026-02-18", "type": "expense", "desc": "Hosting jaarlijks", "base": 120, "ivaPct": 21}
+        ]
+      }
+    },
+    {
+      "id": "c3",
+      "name": "Bakker & Co SL (demo)",
+      "type": "empresa",
+      "nif": "B00000003",
+      "email": "demo.bakker@example.com",
+      "phone": "+34 600 000 003",
+      "regimen": "",
+      "notes": "Demo client — fictional data.",
+      "modelos": ["303", "111", "115", "390", "190", "200", "347"],
+      "docs": [
+        {"name": "Libros contables", "recv": true},
+        {"name": "Cuentas anuales", "recv": false}
+      ],
+      "filed": {"111|2026-04-20": true, "303|2026-04-20": true},
+      "ledger": {
+        "start": 8500,
+        "startDate": "2026-01-01",
+        "actual": null,
+        "entries": [
+          {"id": "e301", "date": "2026-01-10", "type": "income", "desc": "Factuur klant X", "base": 6000, "ivaPct": 21},
+          {"id": "e302", "date": "2026-02-05", "type": "expense", "desc": "Kantoorhuur", "base": 900, "ivaPct": 21},
+          {"id": "e303", "date": "2026-03-01", "type": "expense", "desc": "Salaris (bruto, ref nómina)", "base": 2100, "ivaPct": 0}
+        ]
+      }
+    },
+    {
+      "id": "c4",
+      "name": "Smit Hostelería SL (demo)",
+      "type": "empresa",
+      "nif": "B00000004",
+      "email": "demo.smit@example.com",
+      "phone": "+34 600 000 004",
+      "regimen": "",
+      "notes": "Demo client — fictional data.",
+      "modelos": ["303", "111", "390", "190", "200"],
+      "docs": [{"name": "Facturas trimester", "recv": true}],
+      "filed": {},
+      "ledger": {
+        "start": 4200,
+        "startDate": "2026-01-01",
+        "actual": null,
+        "entries": [
+          {"id": "e401", "date": "2026-01-20", "type": "income", "desc": "Omzet horeca jan", "base": 5200, "ivaPct": 10},
+          {"id": "e402", "date": "2026-02-15", "type": "expense", "desc": "Leveranciers", "base": 1800, "ivaPct": 10}
+        ]
+      }
+    },
+    {
+      "id": "c5",
+      "name": "Meijer (particulier, demo)",
+      "type": "particular",
+      "nif": "Z0000005S",
+      "email": "demo.meijer@example.com",
+      "phone": "+34 600 000 005",
+      "regimen": "",
+      "notes": "Demo client — fictional data. Renta only.",
+      "modelos": ["100"],
+      "docs": [
+        {"name": "Certificado de retenciones (werkgever)", "recv": true},
+        {"name": "Datos fiscales AEAT", "recv": false}
+      ],
+      "filed": {},
+      "ledger": {"start": 0, "startDate": "", "actual": null, "entries": []}
+    },
+    {
+      "id": "c6",
+      "name": "Visser (particulier, demo)",
+      "type": "particular",
+      "nif": "X0000006T",
+      "email": "demo.visser@example.com",
+      "phone": "+34 600 000 006",
+      "regimen": "",
+      "notes": "Demo client — fictional data. Owns rental property.",
+      "modelos": ["100"],
+      "docs": [
+        {"name": "Info onroerend goed", "recv": true},
+        {"name": "Hypotheek/huur info", "recv": true}
+      ],
+      "filed": {},
+      "ledger": {"start": 0, "startDate": "", "actual": null, "entries": []}
+    },
+    {
+      "id": "c7",
+      "name": "Mulder Reformas (demo)",
+      "type": "autonomo",
+      "nif": "Y0000007K",
+      "email": "demo.mulder@example.com",
+      "phone": "+34 600 000 007",
+      "regimen": "módulos",
+      "notes": "Demo client — fictional data. Estimación objetiva.",
+      "modelos": ["303", "131", "390", "100"],
+      "docs": [{"name": "Facturas recibidas (kwartaal)", "recv": false}],
+      "filed": {},
+      "ledger": {
+        "start": 600,
+        "startDate": "2026-01-01",
+        "actual": null,
+        "entries": [
+          {"id": "e701", "date": "2026-02-11", "type": "income", "desc": "Verbouwing klant", "base": 3200, "ivaPct": 21},
+          {"id": "e702", "date": "2026-03-09", "type": "expense", "desc": "Materialen", "base": 950, "ivaPct": 21}
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+# Real client data — never commit
+klanten.json
+klanten.json.bak
+klanten.json.tmp
+data/klanten.json
+
+# API key files
+api-key.txt
+.env
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+
+# Test / working files — not part of the public repo
+test-factura.html
+INSTALLEREN.txt
+memory/
